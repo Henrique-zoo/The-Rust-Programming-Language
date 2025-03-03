@@ -191,3 +191,20 @@ let segundo = a[1]; // segundo = 2
 Se tentarmos acessar um índice além do limites de um *array*, o código "entra em pânico", isto é, temos um erro em tempo de execução, algo raro em Rust, pois ele costuma capturar os erros em tempo de compilação.
 
 ## **Funções**
+A palavra-chave `fn` é utilizada para declarar funções. Por padrão, o *snake_case* é utilizado em seus nomes. Ademais, o nome da função é seguido por parênteses, onde ficam seus parâmetros e chaves, onde fica o corpo dá função, isto é, onde o seu comportamento é implementado. Os tipos dos parâmetros de uma função devem ser explicitamente declarados, mas o tipo da função em si, não necessariamente.
+
+```rust
+fn soma(a: i32, b: i32) {
+    return a + b
+}
+```
+
+Ao chamar uma função, escreve-se seu nome seguido de parênteses, onde ficam seus argumentos: valores que serão associados aos parâmetros da função quando da hora de sua execução.
+
+```rust
+a = soma(2, 7);
+b: i32 = soma(16, 37);
+
+c = soma(a, b) // Aqui, os argumentos são os valores associados às variáveis a e b
+```
+
