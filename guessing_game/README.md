@@ -4,6 +4,6 @@
 Esse projeto é uma ótima introdução à linguagem, apresentando conceitos como tipos algébricos, traits, casamento de padrão, tratamento de erros, conversão de tipos e mutabilidade de variáveis.
 
 ## Características dessa implementação
-Nessa implementação do projeto, eu traduzi as mensagens para português e adicionei uma funcionalidade no tratamento de erros para inputs inválidos: caso o usuário digite letras ou números não naturais na entrada, o programa exibe a mensagem `Digite um número inteiro positivo!` a não ser que a entrada seja `sair`, nesse caso, a execução do programa termina.
+Nessa implementação do projeto, eu traduzi as mensagens para português e adicionei uma funcionalidade no tratamento de erros para inputs inválidos: se o usuário digitar um número não inteiro, o programa exibe `Digite um número inteiro de 1 a 100!`; se ele digitar um número negativo, exibe `Digite um número positivo!`; se a entrada forem letras, exibe a mensagem `Digite um número!` a não ser que essas letras formem a palavra `sair`, nesse caso, a execução do programa termina.
 
 Para uma melhor explicação do código, leia os extensos comentários nele ou leia o [capítulo 2 da documentação](https://doc.rust-lang.org/book/ch02-00-guessing-game-tutorial.html).

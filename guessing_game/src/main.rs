@@ -23,17 +23,29 @@ fn main() {
                 // Retorna o valor que `Ok` está guardadndo se a instância do Result for `Ok`
 
         // Aqui, convertemos guess_str para um inteiro sem sinal. No `parse()`,  não é necessário denotar o tipo, pois isso é compreendido pelo compilador pelo tipo explicitamente anotado (u32) da variável que recebe o resultado dessa expressão
-        let guess: u32 = match guess_str.trim().parse() { // Essa expressão (junto com a comparação no match) tem mais um efeito colateral: o interpretador entende que o tipo da variável secret number é u32.
+        let guess: u8 = match guess_str.trim().parse() { // Essa expressão (junto com a comparação no match) tem mais um efeito colateral: o interpretador entende que o tipo da variável secret number é u32.
             Ok(num) => num,
             Err(_) => {
-                if guess_str.trim() == "sair" {
-                    break;
-                } else {
-                    println!("Digite um número inteiro positivo!");
-                    continue;
-                }
+                match guess_str.trim().parse::<f32>() {
+                    Ok(number) => {
+                        if number < 0.0 {
+                            println!("Digite um número positivo!");
+                        } else {
+                            println!("Digite um número inteiro de 1 a 100!");
+                        }
+                        continue;
+                    },
+                    Err(_) => {
+                        if guess_str.trim() == "sair" {
+                            break;
+                        } else {
+                            println!("Digite um número!");
+                            continue;
+                        }
+                    }
+                };
             }
-        }; // Note que nem toda variável pode ser convertida para um inteiro. Por isso, o parse() retorna, assim como o read_line(), um Result. Tratamos ele de forma a terminar o programa se o usuário digitou "quit" e ignorar o input se ele digitou uma letra qualquer.
+        }; // Note que nem toda variável pode ser convertida para um inteiro. Por isso, o parse() retorna, assim como o read_line(), um Result. Tratamos ele de forma a terminar o programa se o usuário digitou "quit" e ignorar o input se ele digitou uma letra qualquer ou um número fora do escopo.
 
         // Essa linha tem o mesmo resultado de `println!("You guessed: {guess}")`
         println!("Você chutou: {}", guess); // {} é um placeholder para a expressão após a vírgula
