@@ -9,6 +9,9 @@ Esse repositório contém os códigos e anotações que criei enquanto estudava 
     1. [Tipos Escalares](#tipos-escalares)
     2. [Tipos Compostos](#tipos-compostos)
 3. [Funções](#funções)
+    1. [Comandos e Expressões](#comandos-e-expressões)
+    2. [Funções com Valores de Saída](#funções-com-valores-de-saída)
+        1. [Por que o return é um comando?](#por-que-o-return-é-um-comando)
 
 ----
 
@@ -191,11 +194,11 @@ let segundo = a[1]; // segundo = 2
 Se tentarmos acessar um índice além do limites de um *array*, o código "entra em pânico", isto é, temos um erro em tempo de execução, algo raro em Rust, pois ele costuma capturar os erros em tempo de compilação.
 
 ## **Funções**
-A palavra-chave `fn` é utilizada para declarar funções. Por padrão, o *snake_case* é utilizado em seus nomes. Ademais, o nome da função é seguido por parênteses, onde ficam seus parâmetros e chaves, onde fica o corpo dá função, isto é, onde o seu comportamento é implementado. Os tipos dos parâmetros de uma função devem ser explicitamente declarados, mas o tipo da função em si, não necessariamente.
+A palavra-chave `fn` é utilizada para declarar funções. Por padrão, o *snake_case* é utilizado em seus nomes. Ademais, o nome da função é seguido por parênteses, onde ficam seus parâmetros e chaves, onde fica o corpo dá função, isto é, onde o seu comportamento é implementado. Os tipos dos parâmetros de uma função devem ser explicitamente declarados, bem como o tipo da sua saída, a não ser que este seja *unit* `()` - a tupla vazia, que é equivalente ao tipo `void` de outras linguagens.
 
 ```rust
-fn soma(a: i32, b: i32) {
-    return a + b
+fn soma(a: i32, b: i32) -> i32 {
+    return a + b;
 }
 ```
 
@@ -203,8 +206,122 @@ Ao chamar uma função, escreve-se seu nome seguido de parênteses, onde ficam s
 
 ```rust
 a = soma(2, 7);
-b: i32 = soma(16, 37);
+b: i32 = soma(16, 37); // tipo explicitado (opcional)
 
 c = soma(a, b) // Aqui, os argumentos são os valores associados às variáveis a e b
 ```
 
+### **Comandos e Expressões**
+Na disciplina ***Linguagens de Programação***, criamos um interpretador para a `Linguagem Imperativa 2` - uma linguagem imperativa com funções. Os conceitos explicados nessa seção são melhores entendidos sob a ótica do interpretador, pois, o que é explicado aqui diz respeito exatamente à como o interpretador/compilador lê os programas em Rust. Recomendo, portanto, a leitura dos arquivos `AbsLI.hs` e `Interpreter.hs` da [Linguagem Imperativa 2](https://github.com/Henrique-zoo/Linguagens-de-Programacao/tree/main/Interpretadores/LI2) no meu repositório da matéria [Linguagens de Programação](https://github.com/Henrique-zoo/Linguagens-de-Programacao).
+
+O corpo de uma expressão é constituído de um bloco de comandos (*statements*) com, opcionalmente, uma expressão ao final. Comandos e expressões são definidos como segue:
+- **Comandos** são instruções que performam uma ação (atualizam o contexto) e não retornam um valor.
+- **Expressões** são avaliadas para um valor resultante.
+
+Comandos podem ser constituídos por expressões, por exemplo:
+
+```rust
+let y = (3 + 6) * 8;
+```
+
+A linha é um comando de atribuição, que é constituído de um identificador (`y`, o nome da variável) e uma expressão (`(3 + 6) * 8`). À variável `y` é atribuído o valor do retorno da avaliação da expressão em questão.
+
+Note que o lado direito de um comando de atribuição não pode ser outro comando pois comandos não retornam nenhum valor e, à uma variável, deve ser atribuído um valor. A linha a seguir gera um erro de compilação em Rust:
+
+```rust
+let x = (let y = 6);
+```
+
+- **Observação:** em algumas linguagens (como C), uma atribuição retorna o valor atribuído. Nesses casos, é possível fazer o que tentamos na linha acima.
+
+    ```c
+    int x;
+    int y = (x = 6); // Resultado: x = 6 e y = 6
+    ```
+
+
+A definição de uma função é, também, um comando. Por exemplo:
+
+```rust
+fn main() {
+    let y = 6;
+}
+```
+
+é um comando.
+
+Por outro lado, são expressões:
+- Um literal de qualquer tipo;
+- Uma expressão matemática, que é avaliada para um literal inteiro;
+- Uma série de operações sobre strings (concatenações, etc.), que é avaliada para um literal string;
+- Uma série de operações sobre booleanos, que é avaliada para um literal booleano;
+- A chamada de uma função;
+- A chamada de um macro;
+- Um bloco de novo escopo.
+
+Por exemplo:
+
+```rust
+fn main() {
+    let y = {
+        let x = 3;
+        x + 1
+    };
+}
+```
+
+Nesse caso, temos um comando de atribuição que atribui à variável `y` o  resultado da avaliação da expressão
+
+```rust
+{
+    let x = 3;
+    x + 1
+}
+```
+que é um bloco com um comando e uma expressão. A avaliação desse bloco é feita da seguinte forma:
+- O comando de atribuição `let x = 3;` cria uma variável `x` no escopo desse bloco e atribui a ela o valor `3`;
+- A expressão `x + 1` é avaliada e retorna o valor `3 + 1 = 4`.
+
+O valor retornado por essa expressão interna do bloco de escopo é o valor retornado pela expressão externa (o próprio bloco). 
+
+Note que não há ponto e vírgula após a expressão `x + 1` do código anterior. Isso ocorre porque expressões em Rust não são sucedidas de ponto e vírgula. Adicionar `;` após a expressão a tranformaria em um comando, dessa forma, não haveria expressões no bloco de escopo e ele retornaria `()`.
+- **Observação:** caso houvessem duas expressões no bloco, a avaliação dele retornaria o valor da avaliação da última expressão.
+
+Esse código tem um efeito similar ao do código a seguir:
+
+```rust
+fn main() {
+    let x = 3;
+    let y = x + 1;
+}
+```
+A diferença é que, no primeiro, `x` só existe no escopo do bloco.
+
+### Funções com Valores de Saída
+Como dito anteriormente, funções podem ser finalizadas por expressões. A avaliação dessa expressão no contexto do escopo da função é o resultado da avaliação da função, ou seja, sua saída. Funções finalizadas por expressões tem valores de saída.
+
+> Na verdade, toda função tem um valor de saída, mas as que não são finalizadas por uma expressão retornam implicitamnte o valor *unit*, do tipo *unit* `()` e o tipo da sua saída não precisa ser explicitado. Então, fingimos que elas não têm saída, mas, de fato, elas precisam ter, pois a chamada de uma função é uma expressão, e uma expressão precisa retornar um valor.
+
+```rust
+fn cincun() -> u8 { // "Com Saída"
+    5
+} // função que retorna um valor
+
+fn main() { //  "Sem Saída"
+    let x = cincun();
+
+    println!("O valor de x é {x}");
+} // função que retorna `()`
+```
+
+Note que não é necessária a palavra-chave `return` para definir a saída de uma função, diferente de outras linguagens. Podemos, porém, utilizar o `return` para terminar a execução da função antes da sua última linha ou, simplesmente, por preferência. Nesse caso, é necessário utilizar ponto e vírgula, pois o `return` é um comando, não uma expressão.
+
+#### Por que o `return` é um comando?
+O `return` retoirna um valor, então por que ele é um comando? É um comando pois ele não retorna um valor no contexto em que é utilizado, por exemplo, não podemos fazer
+
+```rust
+fn main() {
+    let x = return 5;
+}
+```
+Além disso, o `return` modifica o contexto do escopo em que é utilizado, dando fim a ele, seguindo, portanto, as condições para ser um comando.
