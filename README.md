@@ -303,15 +303,17 @@ Como dito anteriormente, funções podem ser finalizadas por expressões. A aval
 > Na verdade, toda função tem um valor de saída, mas as que não são finalizadas por uma expressão retornam implicitamnte o valor *unit*, do tipo *unit* `()` e o tipo da sua saída não precisa ser explicitado. Então, fingimos que elas não têm saída, mas, de fato, elas precisam ter, pois a chamada de uma função é uma expressão, e uma expressão precisa retornar um valor.
 
 ```rust
+// função que retorna um valor
 fn cincun() -> u8 { // "Com Saída"
     5
-} // função que retorna um valor
+}
 
+// função que retorna `()`
 fn main() { //  "Sem Saída"
     let x = cincun();
 
     println!("O valor de x é {x}");
-} // função que retorna `()`
+}
 ```
 
 Note que não é necessária a palavra-chave `return` para definir a saída de uma função, diferente de outras linguagens. Podemos, porém, utilizar o `return` para terminar a execução da função antes da sua última linha ou, simplesmente, por preferência. Nesse caso, é necessário utilizar ponto e vírgula, pois o `return` é um comando, não uma expressão.
