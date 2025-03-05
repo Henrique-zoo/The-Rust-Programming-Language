@@ -317,7 +317,7 @@ fn main() { //  "Sem Saída"
 Note que não é necessária a palavra-chave `return` para definir a saída de uma função, diferente de outras linguagens. Podemos, porém, utilizar o `return` para terminar a execução da função antes da sua última linha ou, simplesmente, por preferência. Nesse caso, é necessário utilizar ponto e vírgula, pois o `return` é um comando, não uma expressão.
 
 #### Por que o `return` é um comando?
-O `return` retoirna um valor, então por que ele é um comando? É um comando pois ele não retorna um valor no contexto em que é utilizado, por exemplo, não podemos fazer
+O `return` retorna um valor, então por que ele é um comando? É um comando pois ele não retorna um valor no contexto em que é utilizado, por exemplo, não podemos fazer
 
 ```rust
 fn main() {
