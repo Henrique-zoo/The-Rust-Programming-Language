@@ -327,3 +327,172 @@ fn main() {
 }
 ```
 Além disso, o `return` modifica o contexto do escopo em que é utilizado, dando fim a ele, seguindo, portanto, as condições para ser um comando.
+
+## Comentários
+Em Rust, comentários são feitos com `//`. Tudo que sucede esse marcador em uma linha é ignorado pelo compilador.
+
+Para fazer comentários de múltiplas linhas, é necessário adicionar `//` em cada linha.
+
+## Controle de Fluxo
+É a capacidade de executar um bloco de código apenas se uma condição for verdadeira ou executá-lo repetidas vezes enquanto a condição for verdadeira.
+
+### Expressão `if`
+A expressão `if` permite que alteremos o comportamento do código em função de certas condições.
+
+A sintaxe é a seguinte: depois da palavra-chave `if`, introduzimos uma condição, seguida de um bloco de comandos chamado "braço", que fica entre chaves. Isso diz: execute esse bloco de comando apenas se essa condição for verdadeira, caso contrário, ignore essas linhas. Opcionalmente, podemos adicionar, após o bloco de comando do `if`, um `else`, também seguido de um bloco de comandos. Nesse caso, o código diz: se essa condição for verdadeira, execute esse bloco de comandos, senão, ignore-o e execute este outro bloco.
+
+```rust
+let number = 3;
+
+if number < 5 {
+    println!("A condição é verdadeira!");
+} else {
+    println!("A condição é falsa!");
+}
+```
+
+Diferente de algumas linguagens, como C e C++, a condição de um `if` tem que ser boolena - Em C, por exemplo, só se avalia se o valor do inteiro na condição é diferente de 0 (até porque sequer existem booleanos).
+
+#### Múltiplas condições com `else if`
+Podemos combinar `else` e `if` para tratar mais de dois caminhos possíveis para o programa.
+
+```rust
+let numero = 6;
+
+if numero % 4 == 0 {
+    println!("O número é divisível por 4");
+} else if numero % 3 == 0 {
+    println!("O número é divisível por 3");
+} else if numero % 2 == 0 {
+    println!("O número é divisível por 2");
+} else {
+    println!("O número não é divisível por 4, 3, ou 2");
+}
+```
+
+Note que, se um número for divisível por 4, 3 e 2, apenas o comando `println!("O número é divisível por 4");` será executado. Em uma estrutura `if` de controle de fluxo com vários possíveis caminhos, apenas um pode ser tomado. Para exibir mais de um divisor do `numero`, faríamos:
+
+```rust
+if numero % 4 == 0 {
+    println!("O número é divisível por 4");
+}
+if numero % 3 == 0 {
+    println!("O número é divisível por 3");
+}
+if numero % 2 == 0 {
+    println!("O número é divisível por 2");
+}
+if numero % 4 != 0 && numero % 3 == 0 && numero % 2 == 0 {
+    println!("O número não é divisível por 4, 3, ou 2");
+}
+```
+
+#### Utilizando `if` em comandos `let`
+Um `if` no Rust é uma expressão, não um comando. Dessa forma, ao invés de ocupar espaço com a longa sintaxe do `if` padrão, podemos utilizar uma simplificação dessa sintaxe para comando de atribuição.
+
+```rust
+let condicao = true;
+let numero = if condicao { 5 } else { 6 };
+```
+**Não confunda essa simplificação do `if` com um operador ternário.** Não há nada novo nessa sintaxe. **Esse é um `if` normal**, simplesmente não pulamos linhas ao escrevê-lo. Poderíamos fazer
+
+```rust
+let condicao = true;
+
+let numero =
+    if condicao {
+        5
+    } else {
+        6
+    }
+;
+```
+
+**Observação:** o `;` é necessário por causa do comando de atribuição `let`, não por causa da expressão `if`. Expressões não são sucedidas de ponto e vírgula.
+
+Lembre-se que uma variável só pode ter um tipo, portanto, os braços do `if` e do `else` devem ser avaliados para o mesmo tipo. Dessa forma, o código a seguir gera um erro de compilação:
+
+```rust
+fn main() {
+    let condition = true;
+
+    let numero = if condition { 5 } else { "seis" };
+
+    println!("O valor do número é: {numero}");
+}
+```
+
+### Estruturas de Repetição
+O Rust tem três tipos de estruturas de repetição: `loop`, `while` e `for`.
+
+#### Repetição com `loop`
+A palavra-chave `loop` faz o Rust executar um bloco de comandos até que você explicitamente o faça parar. Caso o loop não seja quebrado pelo código, podemos quebrá-lo pressionando `Ctrl + C` no terminal. A palavra-chave utilizada para quebrar um loop é `break`. Podemos, também, utilizar a palavra-chave `continue` para que os comandos após a sua utilização não sejam executados em algum caso específico.
+
+```rust
+fn main() {
+    let soma = 0;
+    let mut n = 10;
+
+    loop {
+        if n == 0 {
+            break; // quebramos o loop quando n é igual a 0
+        } else if 10 % n == 0 {
+            continue; // não somamos divisores de 10
+        }
+        
+        let soma = soma + n;
+        n -= 1;
+    }
+
+    println!("O resultado da soma é {soma}")
+}
+```
+
+##### Retornando valores de Loops
+Podemos adicionar uma expressão após o `break` para que a expressão `loop` seja avaliada para um valor diferente de `()`. Por exemplo:
+
+```rust
+fn main() {
+    let mut contador = 0;
+
+    let resultado = loop {
+        contador += 1;
+
+        if contador == 10 {
+            break contador * 2;
+        }
+    };
+
+    println!("O resultado é {resultado}");
+}
+```
+
+##### Rótulos de Loops para Desambiguação
+Quando temos vários loops encasquetados, as palavras-chave `break` e `continue` se aplicam ao loop mais interno nesse ponto. Podemos rotular os loops para aplicá-las ao loop que quisermos:
+
+```rust
+fn main() {
+    let mut contador = 0;
+    'contagem_crescente: loop {
+        println!("contador = {contador}");
+        let mut faltando = 10;
+
+        loop {
+            println!("faltando = {faltando}");
+            if faltando == 9 {
+                break;
+            }
+            if contador == 2 {
+                break 'contagem_crescente;
+            }
+            faltando -= 1;
+        }
+
+        contador += 1;
+    }
+    println!("Fim contador = {contador}");
+}
+```
+
+#### Repetições Condicionais com `while`
+Quando queremos repetir um bloco de comandos enquanto uma condição for verdade, podemos usar a estrutura de repetição `while`. É possível implementar 
