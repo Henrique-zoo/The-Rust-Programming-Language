@@ -495,4 +495,95 @@ fn main() {
 ```
 
 #### Repetições Condicionais com `while`
-Quando queremos repetir um bloco de comandos enquanto uma condição for verdade, podemos usar a estrutura de repetição `while`. É possível implementar 
+Quando queremos repetir um bloco de comandos enquanto uma condição for verdade, podemos usar a estrutura de repetição `while`. É possível implementar qualquer algoritmo que use a estrutura de repetição `while` utilizando `loop`, `if-else` e `break`, mas, como esse é um padrão muito comum, o Rust (assim como quase todas as linguagens de programação) decidiu constrí-lo embutido na linguagem.
+
+```rust
+let mut l = 0;
+let mut r = 10;
+
+while l < r {
+    println!("l é menor que r");
+    l += 1;
+}
+```
+
+Também podemos percorrer uma coleção com `while`
+
+```rust
+fn main() {
+    let a = [10, 20, 30, 40, 50];
+    let mut i = 0;
+
+    while i < 5 {
+        println!("O valor é: {}", a[i]);
+
+        i += 1;
+    }
+}
+```
+porém, essa não é a melhor solução pois:
+1. Se tentarmos acessar um índice além dos limites do vetor, o programa apresentará um erro em tempo de execução;
+2. Se aumentarmos o tamanho do vetor, precisaremos reestrutrar o código.
+
+#### Percorrendo Coleções com `for`
+O `for` é a solução perfeita para percorrer uma coleção. Fazemos
+
+```rust
+fn main() {
+    let a = [10, 20, 30, 40, 50];
+
+    for elemento in a {
+        println!("o valor é: {elemento}");
+    }
+}
+```
+
+O `for` também pode ser utilizado intercambiavelmente com o `while`. Basta utilizarmos um `Range`, que cria um vetor com todos os números naturais dentro de um intervalo fechado no início e aberto no final, e conseguimos fazer tudo com um `for`.
+
+```rust
+for numero in (1..4) { // [1, 2, 3]
+    println!("{numero}");
+}
+```
+
+## A stack e a Heap
+Tanto a stack (pilha) quando a heap são partes da memória disponível para que o seu programa use qunado é executado, mas eles são estruturados de formas bem diferentes.
+
+A stack é exatamente o que o nome diz no sentido de estrutura de dados: ela guarda valores na ordem em que os recebe e os remove na ordem contrária, isso é chamado *LIFO (Last in Fist Out)*. Todo dado armazenado na stack deve ter tamanho fixo e estático.
+
+A heap é bem menos organizada. Quando você coloca um dado na heap, você solicita uma certa quantidade de espaço, o alocador encontra um lugar com espaço o suficiente, marca esse lugar como sendo utilizado, e retorna um ponteiro para esse endereço. Isso é chamado alocação. Como um ponteiro tem um tamanho fixo, ele fica guardado na stack.
+
+"Empurrar" na stack é mais rápido do que alocar na heap pois, no segundo caso, o alocador tem que procurar um espaço de memória vazio, enquanto, na stack, basta colocar o valor no topo. Da mesma forma, é mais rápido acessar dados na stack porque você precisa seguir o ponteiro para encontrar o dado na heap.
+
+Quando um programa chama uma função, os valores passados para a função são empurrados para a stack, quando a função acaba de ser executada, o valor é retirado da stack.
+
+## Ownership
+Ownership é um conjunto de regras que define como o Rust gerencia memória.
+
+### Regras de *Ownership*
+1. Cada valor em Rust tem um *dono*
+2. Cada valor só pode ter um dono por vez
+3. Quando um dono sai do escopo, o valor é destruído
+
+### O escopo de uma variável
+O escopo de uma variável é o alcance dela no código. Por exemplo:
+```rust
+{                       // s ainda não foi declarado
+    let s: &str = "hello";   // s é valido daqui pra frente
+    // brinque com s
+} // esse é o fim do escopo de s
+```
+Esse é um caso trivial com uma variável que fica armazenada na stack (uma string de tamanho estático `str`). Vamos ver como o ownership se comporta com tipos mais complexos e dinâmicos, como a `String`
+
+### O Tipo String
+Já vimos muitos literais de strings até então, mas esse tipo não é suficiente para tudo o que queremos fazer com textos em um programa. Muitas vezes, precisamos de dados sobre os quais não sabemos informações como tamanho em tempo de compilação (quando recebemos uma string por meio da entrada de um usuário, por exemplo).
+
+Para isso, existe o tipo `String`. Esse tipo gerencia memória alocada na heap e, portanto, consegue armazenar uma quantidade de texto desconhecida em tempo de compilação. Podemos criar uma `String` por meio de um literal de string utilizando a função `from`:
+
+```rust
+let s = String::from("Hello");
+
+s.push_str(", world!"); // push_str() incrementa um literal de string a uma String
+
+println!("{s}"); // > Hello, world!
+```
