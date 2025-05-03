@@ -12,6 +12,23 @@ Esse repositório contém os códigos e anotações que criei enquanto estudava 
     1. [Comandos e Expressões](#comandos-e-expressões)
     2. [Funções com Valores de Saída](#funções-com-valores-de-saída)
         1. [Por que o return é um comando?](#por-que-o-return-é-um-comando)
+4. [Comentários](#comentários)
+5. [Controle de Fluxo](#controle-de-fluxo)
+    1. [Expressão `If`](#expressão-if)
+    2. [Estruturas de Repetição](#estruturas-de-repetição)
+        1. [Repetição com `loop`](#repetição-com-loop)
+        2. [Repetições Condicionais com `while`](#repetições-condicionais-com-while)
+        3. [Percorrendo Coleções com `for`](#percorrendo-coleções-com-for)
+6. [A Stack e a Heap](#a-stack-e-a-heap)
+7. [Ownership](#ownership)
+    1. [Regras do Ownership](#regras-de-ownership)
+    2. [O escopo de uma variável](#o-escopo-de-uma-variável)
+    3. [O Tipo String](#o-tipo-string)
+    4. [Memória e Alocação](#memória-e-alocação)
+    5. [Variáveis e Dados Interagindo](#variáveis-e-dados-interagindo)
+    6. [Escopo e Atribuição](#escopo-e-atribuição)
+    7. [Deep Copy](#deep-copy)
+        1. [O Método `clone()` em Tipos Escalares](#o-método-clone-em-tipos-escalares)
 
 ----
 
@@ -546,19 +563,42 @@ for numero in (1..4) { // [1, 2, 3]
 }
 ```
 
-## A stack e a Heap
-Tanto a stack (pilha) quando a heap são partes da memória disponível para que o seu programa use qunado é executado, mas eles são estruturados de formas bem diferentes.
+## A Stack e a Heap
+Tanto a stack (pilha) quando a heap são partes da memória disponíveis para que o seu programa use quando é executado, mas eles são estruturados de formas bem diferentes.
 
-A stack é exatamente o que o nome diz no sentido de estrutura de dados: ela guarda valores na ordem em que os recebe e os remove na ordem contrária, isso é chamado *LIFO (Last in Fist Out)*. Todo dado armazenado na stack deve ter tamanho fixo e estático.
+A stack é exatamente o que o nome diz no sentido de estrutura de dados: ela guarda um *stack frame* para cada função na ordem em que elas são chamadas e os remove na ordem em que a execução dessas funções acaba. Naturalmente, a última função chamada é a primeira que termina de ser executada (não estamos tratando de funções assíncronas e programação concorrente), então isso é um caso de *LIFO (Last in Fist Out)*. Em cada *stack frame* são armazenados os valores das variáveis locais da função associada. Todo dado armazenado na stack deve ter tamanho fixo e estático.
 
-A heap é bem menos organizada. Quando você coloca um dado na heap, você solicita uma certa quantidade de espaço, o alocador encontra um lugar com espaço o suficiente, marca esse lugar como sendo utilizado, e retorna um ponteiro para esse endereço. Isso é chamado alocação. Como um ponteiro tem um tamanho fixo, ele fica guardado na stack.
+A heap não corresponde à estrutura de dados `heap` e é bem menos organizada. Quando você coloca um dado na heap, você solicita uma certa quantidade de espaço, o alocador encontra um lugar com espaço o suficiente, marca esse lugar como sendo utilizado, e retorna um ponteiro para esse endereço. Isso é chamado alocação (e é o que o `malloc` faz no C). Como um ponteiro tem um tamanho fixo, ele fica guardado na stack.
 
-"Empurrar" na stack é mais rápido do que alocar na heap pois, no segundo caso, o alocador tem que procurar um espaço de memória vazio, enquanto, na stack, basta colocar o valor no topo. Da mesma forma, é mais rápido acessar dados na stack porque você precisa seguir o ponteiro para encontrar o dado na heap.
+"Empurrar" na stack é mais rápido do que alocar na heap pois, no segundo caso, o alocador tem que procurar um espaço de memória vazio, enquanto, na stack, basta colocar o valor no topo. Da mesma forma, é mais rápido acessar dados na stack, pois, na heap, é necessário seguir o ponteiro para encontrar o dado.
 
-Quando um programa chama uma função, os valores passados para a função são empurrados para a stack, quando a função acaba de ser executada, o valor é retirado da stack.
+Quando um programa chama uma função, os valores passados para ela são empurrados para o *stack frame* que acabou de ser criado. Quando a função acaba de ser executada, o *stack frame* é destruído e os valores de variáveis nele também. Dessa forma, não é necessário fazer nada em relação à memória na stack, tudo é resolvido automaticamente ao fim da execução.
+
+Na heap, a memória é um pouco mais complicada. Se um recurso está na heap e o escopo em que esse recurso foi alocado acaba, o ponteiro para ele (que está na stack) é destruído, mas o valor continua na heap a não ser que o seu espaço seja liberado (com `free`, por exemplo, no C). Isso é o que gera os *memory leaks*, a memória continua alocada depois que o programa termina de ser executado.
+
+Veja o exemplo:
+
+```c
+#include<stdio.h>
+#include<stdlib.h>
+
+int main() {
+    int a; // Vai pra stack
+    int *p; // O ponteiro também vai pra stack
+    // Estamos alocando o espaço para um inteiro na heap
+    p = (int*)malloc(sizeof(int));
+    *p = 10;
+    // Estamos pegando o ponteiro que apontava para o espaço de memória em que estava o 10 e fazendo ele apontar para outro lugar, mas não liberamos o espaço de memória para o qual 'p' apontava antes
+    // Consequentemente, haverá um 10 alocado em algum espaço aleatório da memória, ao qual não temos acesso, até que o sistema operacional de um jeito de jogar isso fora
+    p = (int*)malloc(sizeof(int));
+    *p = 20;
+    // Aqui, estamos liberando a memória em que esta alocado o 20
+    free(p);
+}
+```
 
 ## Ownership
-Ownership é um conjunto de regras que define como o Rust gerencia memória.
+Ownership é um conjunto de regras que define como o Rust gerencia memória a fim de evitar os *memory leaks* explicados. Basicamente, o Rust faz valer para a heap aquilo que já vale para a stack.
 
 ### Regras de *Ownership*
 1. Cada valor em Rust tem um *dono*
@@ -581,9 +621,106 @@ Já vimos muitos literais de strings até então, mas esse tipo não é suficien
 Para isso, existe o tipo `String`. Esse tipo gerencia memória alocada na heap e, portanto, consegue armazenar uma quantidade de texto desconhecida em tempo de compilação. Podemos criar uma `String` por meio de um literal de string utilizando a função `from`:
 
 ```rust
-let s = String::from("Hello");
+let s = String::from("Olá");
 
-s.push_str(", world!"); // push_str() incrementa um literal de string a uma String
+s.push_str(", mundo!"); // push_str() incrementa um literal de string a uma String
 
-println!("{s}"); // > Hello, world!
+println!("{s}"); // > Olá, mundo!
 ```
+
+### Memória e Alocação
+A diferença entre um literal de uma string e uma variável do tipo `String` é que o literal já tem tamanho e valor conhecidos em tempo de compilação. Dessa forma, ele pode ser transformado em código de máquina (bytes) em tempo de compilação e gravado executável. Com a variável do tipo `String` o programa precisa solicitar memória e liberar esse espaço de memória após o fim da execução.
+
+O ownership entra nessa segunda etapa: liberação do espaço de memória.
+
+Em linguagens com *garbage collector (GC)*, como Java, Haskell, Python, etc., o GC toma conta disso. Na maioria das linguagens sem GC, como C, C++, etc., a memória deve ser liberada pelo programador. Isso muitas vezes não é feito corretamente, o que gera um problema chamado *memory leak* - basicamente, desperdício de memória.
+
+Em Rust, o ownership é a maneira com que a liberação de memória é tratada. Um espaço de memória é automaticamente liberado quando a sua variável "dona" (*owner*) sai do escopo. Internamente, o que o Rust faz é, assim que a variável sai do escopo, chamar uma função especial chamada `drop` - é nela que o criador de um tipo implementa a lógica para devolução da memória.
+
+> **Informação:** o sistema de ownership do Rust é baseado em um padrão do C++ chamado *Resource Acquisition Is Initialization (**RAII**)*, segundo o qual, ao adquirir recursos - abrir arquivos, conexão com banco de dados, etc. -, devemos encapsulá-los em objetos de classes em que:
+> - O construtor adquire o recurso.
+> - O destrutor libera o recurso.
+>
+> Dessa forma, o destrutor da classe é chamado quando o objeto sai do escopo, evitando vazamento de memória.
+
+### Variáveis e Dados Interagindo
+Várias variáveis podem interagir com o mesmo dado de diferentes formas em Rust. Vamos analisar como se dá essa interação com variáveis de tipos de tamanho fixo.
+
+```rust
+let s1 = "hello";
+let s2 = s1;
+```
+No código acima, `s1` é do tipo ` &str`, ou seja, é uma variável de tamanho fixo, que é, portanto, armazenada na *stack*. Nesse caso, fazer `s2 = s1` é fazer uma cópia do valor em `s1` e conectá-lo à variável `s2`. Mas e se fizermos o mesmo com variáveis do tipo `String`?
+
+```rust
+let s1 = String::from("hello");
+let s2 = s1;
+```
+
+O código é bastante parecido com o anterior, então é natural achar que o mesmo que acontece lá acontece aqui, mas obviamente, não é esse o caso (senão nem estaríamos discutindo isso). Como já foi discutido, `String` é um tipo dinâmico, ou seja, seu valor é armazenado na heap, na stack são guardadas informações não voláteis sobre essa variável. Especificamente no caso da `String`, um ponteiro para o endereço do início do valor na heap, um tamanho e uma capacidade.
+
+<div align="center">
+<img src="./resources/images/String1.png">
+</div>
+
+O ponteiro já foi discutido. O tamanho (*lenght*) é quanta memória, em quantidade de bytes, a `String` ocupa. A capacidade (*capacity*) é o total de memória, em bytes, que a String recebeu do alocador - isso será melhor discutido adiante.
+
+O que de fato ocorre quando fazemos `s2 = s1` no caso da `String` (e dos outros tipos dinâmicos) é que os dados que estão na stack são copiados de uma variável para a outra, mas os que estão na heap não. Dessa forma, no código acima, teríamos `s1` e `s2` na stack com ponteiros apontando para o mesmo espaço de memória na heap - não é exatamente isso que acontece pois há mais um detalhe que será explicado à seguir.
+
+<div align="center">
+<img src="./resources/images/String2.png">
+</div>
+
+Copiar os dados na heap poderia ter um custo muito grande em tempo de execução se eles fossem muito extensos.
+
+> **Note:** o comportamento é o mesmo no caso da `&str` e da `String`, os valores na stack são copiados de uma variável para a outra. A diferença é que, em tipos dinâmicos, os dados na stack são apenas os metadados; os dados - o valor da `String`, por exemplo - estão na heap.
+
+Como sabemos, *ownership* estabelece que o Rust chama automaticamente a função `drop` quando uma variável sai de escopo. Daí, no exemplo acima, quando `s1` e `s2` saíssem de escopo, o Rust chamaria o `drop` duas vezes para liberar o mesmo espaço de memória. Esse é o chamado *double free error*. Para evitá-lo, quando fazemos `let s2 = s1` o Rust desconsidera `s1`, isto é, essa variável deixa de existir e não poderá ser acessada, tentar fazer isso geraria um erro em tempo de compilação. Finalmente, o que de fato acontece quando fazemos `let s1 = s2` em Rust está mostrado na imagem a seguir:
+
+<div align="center">
+<img src="./resources/images/String3.png">
+</div>
+
+Em outras linguagens, a prática de copiar apenas os "metadados" da stack, e não os dados presentes na heap, é chamada de *shalow copy* - em contraste ao *deep copy*, copiar também os dados na heap. Como em Rust, a variável que foi copiada é descartada, chamamos isso de `mover` (*move*). No exemplo que estamos discutindo, diríamos que `s1` foi movida para `s2`.
+
+Claro que, em tipos de tamanho estático, como todo o dado está na stack, fazer uma atribuição de uma variável a outra variável `let s2 = s1` não gera valores sem *owner* na heap, logo, nada do descrito acima se aplica.
+
+### Escopo e Atribuição
+Outro caso em que o `drop` é chamado é quando atribuímos um novo valor à uma variável. Por exemplo,
+
+```rust
+let mut s = String::from("hello");
+s = String::from("ahoy");
+
+println!("{s}, world!"); // > ahoy, world!
+```
+
+Inicialmente, nós criamos a `String` com o valor `"hello"` e ligamos ela à variável `s`. Depois, criamos uma nova `String` com o valor `"ahoy"` e atribuímos ela a `s`. Note que, nesse ponto, a `"hello"` não tem um *owner*, não há nada na stack conectado com esse valor na heap, logo, o Rust chamará a função `drop` nele e a memória será imediatamente liberada.
+
+### Deep Copy
+Caso queiramos copiar não apenas os metadados de um tipo dinâmico, mas também os dados na heap, podemos utilizar o método `clone()`.
+
+```rust
+let s1 = String::from("hello");
+let s2 = s1.clone();
+
+println!("s1 = {s1}, s2 = {s2}");
+```
+
+O comportamento desse algoritmo será o da imagem a seguir:
+
+<div align="center">
+<img src="./resources/images/String4.png">
+</div>
+
+#### O Método clone() em Tipos Escalares
+Já vimos que em tipos de tamanho fixo, todo o dado fica guardado na stack e, portanto, fazer `let x = y` não copia apenas os metadados, mas todos os dados, logo não gera nenhum valor na heap sem *owner* e não faz com que `y` seja destruído com `drop`. Então o que acontece se fizermos o que segue?
+
+```rust
+let s1 = "hello";
+let s2 = s1.clone();
+```
+
+Nada de especial! Na verdade, para a maioria dos tipos escalares, uma *deep copy* e uma *shallow copy* são a mesma coisa, logo, o resultado do algoritmo acima é o mesmo de se não usarmos o `clone()`.
+
+Em Rust, existe um trait chamado `Copy` que podem ser colocados em tipos que ficam armazenados na stack. Um tipo em que implementa o trait `Copy` não são movidas, são trivialmente copiadas. O Rust não deixa você anotar um tipo com `Copy` se ele (ou qualquer parte dele) já implementar o trait `Drop`, tentar fazer isso gera um erro em tempo de compilação.
