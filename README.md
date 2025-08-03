@@ -20,7 +20,7 @@ Esse repositório contém os códigos e anotações que criei enquanto estudava 
         2. [Repetições Condicionais com `while`](#repetições-condicionais-com-while)
         3. [Percorrendo Coleções com `for`](#percorrendo-coleções-com-for)
 6. [A Stack e a Heap](#a-stack-e-a-heap)
-7. [Ownership](#ownership)
+7. [Ownership (Posse)](#ownership-posse)
     1. [Regras do Ownership](#regras-de-ownership)
     2. [O escopo de uma variável](#o-escopo-de-uma-variável)
     3. [O Tipo String](#o-tipo-string)
@@ -29,7 +29,10 @@ Esse repositório contém os códigos e anotações que criei enquanto estudava 
     6. [Escopo e Atribuição](#escopo-e-atribuição)
     7. [Deep Copy](#deep-copy)
         1. [O Método `clone()` em Tipos Escalares](#o-método-clone-em-tipos-escalares)
-
+    8. [Ownership e Funções](#ownership-e-funções)
+8. [Referências e Empréstimo de Posse](#referências-e-emprésitmos-de-posse-ownership)
+    1. [Multabilidade de Referências](#multabilidade-de-referências)
+    2. [Referências Pendentes (*Dangling References*)](#referências-pendentes-dangling-references)
 ----
 
 ## **Variáveis e Constantes**
@@ -317,7 +320,7 @@ A diferença é que, no primeiro, `x` só existe no escopo do bloco.
 ### Funções com Valores de Saída
 Como dito anteriormente, funções podem ser finalizadas por expressões. A avaliação dessa expressão no contexto do escopo da função é o resultado da avaliação da função, ou seja, sua saída. Funções finalizadas por expressões tem valores de saída.
 
-> Na verdade, toda função tem um valor de saída, mas as que não são finalizadas por uma expressão retornam implicitamnte o valor *unit*, do tipo *unit* `()` e o tipo da sua saída não precisa ser explicitado. Então, fingimos que elas não têm saída, mas, de fato, elas precisam ter, pois a chamada de uma função é uma expressão, e uma expressão precisa retornar um valor.
+> Na verdade, toda função tem um valor de saída, mas as que não são finalizadas por uma expressão retornam implicitamnte o valor *unit* `()`, uma tupla vazia, e o tipo da sua saída não precisa ser explicitado. Então, fingimos que elas não têm saída, mas, de fato, elas precisam ter, pois a chamada de uma função é uma expressão, e uma expressão precisa retornar um valor.
 
 ```rust
 // função que retorna um valor
@@ -348,7 +351,15 @@ Além disso, o `return` modifica o contexto do escopo em que é utilizado, dando
 ## Comentários
 Em Rust, comentários são feitos com `//`. Tudo que sucede esse marcador em uma linha é ignorado pelo compilador.
 
-Para fazer comentários de múltiplas linhas, é necessário adicionar `//` em cada linha.
+Para fazer comentários de múltiplas linhas, pode-se adicionar `//` em cada linha ou utilizar `/* */`
+
+```rust
+/*
+Tudo que estiver aqui dentro é ignorado pelo compilador!
+
+😍💕💕😘😊😂🤣❤️😍😍👍👌❤️ 
+*/
+```
 
 ## Controle de Fluxo
 É a capacidade de executar um bloco de código apenas se uma condição for verdadeira ou executá-lo repetidas vezes enquanto a condição for verdadeira.
@@ -404,29 +415,25 @@ if numero % 4 != 0 && numero % 3 == 0 && numero % 2 == 0 {
 }
 ```
 
-#### Utilizando `if` em comandos `let`
+#### Utilizando `if` em comandos de atribuição
 Um `if` no Rust é uma expressão, não um comando. Dessa forma, ao invés de ocupar espaço com a longa sintaxe do `if` padrão, podemos utilizar uma simplificação dessa sintaxe para comando de atribuição.
 
 ```rust
 let condicao = true;
 let numero = if condicao { 5 } else { 6 };
 ```
-**Não confunda essa simplificação do `if` com um operador ternário.** Não há nada novo nessa sintaxe. **Esse é um `if` normal**, simplesmente não pulamos linhas ao escrevê-lo. Poderíamos fazer
+**Não confunda essa simplificação do `if` com um operador ternário.** Em muitas linguagens em que o `if` é um comando (ex.: Java, C, Python etc.), criou-se uma espécie de `if` alternativo que é uma expressão: o operador ternário ou operador condicional. Em Rust, o `if` padrão já é uma expressão, logo, não é necessário o operador ternário. Em suma, não há nada novo na sintaxe acima. **Esse é um `if` normal**, simplesmente não pulamos linhas ao escrevê-lo. Poderíamos fazer
 
 ```rust
 let condicao = true;
 
-let numero =
-    if condicao {
+let numero = if condicao {
         5
     } else {
         6
     }
 ;
 ```
-
-**Observação:** o `;` é necessário por causa do comando de atribuição `let`, não por causa da expressão `if`. Expressões não são sucedidas de ponto e vírgula.
-
 Lembre-se que uma variável só pode ter um tipo, portanto, os braços do `if` e do `else` devem ser avaliados para o mesmo tipo. Dessa forma, o código a seguir gera um erro de compilação:
 
 ```rust
@@ -597,7 +604,7 @@ int main() {
 }
 ```
 
-## Ownership
+## Ownership (Posse)
 Ownership é um conjunto de regras que define como o Rust gerencia memória a fim de evitar os *memory leaks* explicados. Basicamente, o Rust faz valer para a heap aquilo que já vale para a stack.
 
 ### Regras de *Ownership*
@@ -681,9 +688,9 @@ Como sabemos, *ownership* estabelece que o Rust chama automaticamente a função
 <img src="./resources/images/String3.png">
 </div>
 
-Em outras linguagens, a prática de copiar apenas os "metadados" da stack, e não os dados presentes na heap, é chamada de *shalow copy* - em contraste ao *deep copy*, copiar também os dados na heap. Como em Rust, a variável que foi copiada é descartada, chamamos isso de `mover` (*move*). No exemplo que estamos discutindo, diríamos que `s1` foi movida para `s2`.
+Em outras linguagens, a prática de copiar apenas os "metadados" da stack, e não os dados presentes na heap, é chamada de *shalow copy* - em contraste ao *deep copy*, copiar também os dados na heap. Como em Rust, a variável que foi copiada é descartada, chamamos isso de `move` (mover). No exemplo que estamos discutindo, diríamos que `s1` foi movida para `s2`.
 
-Claro que, em tipos de tamanho estático, como todo o dado está na stack, fazer uma atribuição de uma variável a outra variável `let s2 = s1` não gera valores sem *owner* na heap, logo, nada do descrito acima se aplica.
+Em tipos de tamanho estático, como todo o dado está na stack, fazer uma atribuição de uma variável a outra variável `let s2 = s1` não gera problemas como *double free error*. Nesses casos, portanto, não é necessário apagar os dados que foram copiados na stack, ou seja, não é feito o `move`.
 
 ### Escopo e Atribuição
 Outro caso em que o `drop` é chamado é quando atribuímos um novo valor à uma variável. Por exemplo,
@@ -707,7 +714,7 @@ let s2 = s1.clone();
 println!("s1 = {s1}, s2 = {s2}");
 ```
 
-O comportamento desse algoritmo será o da imagem a seguir:
+O comportamento, em baixo nível, do sistema ao executar esse código está representdo na imagem a seguir:
 
 <div align="center">
 <img src="./resources/images/String4.png">
@@ -723,4 +730,242 @@ let s2 = s1.clone();
 
 Nada de especial! Na verdade, para a maioria dos tipos escalares, uma *deep copy* e uma *shallow copy* são a mesma coisa, logo, o resultado do algoritmo acima é o mesmo de se não usarmos o `clone()`.
 
-Em Rust, existe um trait chamado `Copy` que podem ser colocados em tipos que ficam armazenados na stack. Um tipo em que implementa o trait `Copy` não são movidas, são trivialmente copiadas. O Rust não deixa você anotar um tipo com `Copy` se ele (ou qualquer parte dele) já implementar o trait `Drop`, tentar fazer isso gera um erro em tempo de compilação.
+Em Rust, existe um trait chamado `Copy` que pode ser colocado em tipos que ficam armazenados na stack. Um tipo em que implementa o trait `Copy` não são movidas, são trivialmente copiadas. O Rust não deixa você anotar um tipo com `Copy` se ele (ou qualquer parte dele) já implementar o trait `Drop`, tentar fazer isso gera um erro em tempo de compilação. Via de regra, qualquer tipo escalar simples implementa `Copy` e qualquer tipo que precise ser alocado ou é um tipo de recurso não implementa.
+- Todos os tipos de inteiros
+- Os booleanos
+- Todos os floats
+- O tipo `char`
+- Tuplas que só tem tipos que também implementam `Copy`
+
+### Ownership e Funções
+É aqui que o *ownership* mais mostra seus efeitos. O mecanismo de passar um valor para uma função é similar ao mecanismo de atribuição de uma variável: tipos estáticos serão copiados e tipos dinâmicos serão movidos. Isso significa que, se enviamos uma variável de tipo `String`, por exemplo, para uma função, essa variável não pode ser usada novamente.
+
+Além disso, o valor de retorno de uma função também é movido para o escopo em que essa função é chamada
+
+```rust
+fn main() {
+    let s = String::from("olá");
+
+    let saida = concatena_mundo(s);
+
+    println!("{}", saida); // > olá, mundo!
+    println!("{}", s); // Erro em tempo de compilação ❌
+}
+
+fn concatena_mundo(mut s: String) -> String {
+    s.push_str(", mundo!");
+    s // s é movido para o escopo em que a função foi chamada
+    // Isso implica que `drop` não é chamado para s, mesmo com o fim do escopo da função
+}
+```
+
+Novamente, para variáveis que implementam o trait Copy, é tudo mais simples. A variável não é movida para o escopo da função; uma cópia dela é enviada.
+
+```rust
+fn main() {
+    let x = 5;
+
+    let y = soma_cinco(x);
+
+    println!("{}", y); // > 10
+    println!("{}", x); // > 5
+}
+
+fn soma_cinco(x: i32) -> i32 {
+    x + 5
+}
+```
+
+Se quisermos reutilizar um valor que foi utilizado como argumento de uma função, a função deverá retornar uma tupla que contém esse valor.
+
+```rust
+fn main() {
+    let s1 = String::from("hello");
+
+    let (s2, len) = calcula_tamanho(s1);
+
+    println!("O tamanho de '{s2}' é {tamanho}.");
+}
+
+fn calcula_tamanho(s: String) -> (String, usize) {
+    let tamanho = s.len();
+
+    (s, tamanho)
+}
+```
+
+## Referências e Emprésitmos de Posse (Ownership)
+Pela abordagem anterior, sempre que quisermos continuar utilizando um valor que é usado como argumento de uma função, precisamos que ele seja retornado por ela. Isso é muito verboso e demasiado complicado para algo tão simples. Imagine: toda função, teria que retornar uma tupla com todos os seus argumentos, além do possível valor de retorno que ela já teria.
+
+Seria bom se houvesse uma forma de passar argumentos para uma função sem transferir as posses de seus valores e, de fato, há. A solução chama-se **referência**. Uma referência é como um ponteiro: é um endereço que podemos seguir para acessar os dados nele; esses dados, porém, pertencem a outra variável. Diferente de ponteiros, é garantido que uma referência aponta para um valor válido de um tipo específico pelo seu tempo de vida.
+
+```rust 
+fn main() {
+    let s1 = String::from("olá");
+
+    let tamanho = calcula_tamanho(&s1);
+
+    println!("O tamanho de '{s1}' é {tamanho}.");
+}
+
+fn calcula_tamanho(s: &String) -> usize {
+    s.len()
+}
+```
+
+O escopo em que a variável `s` é válida é o mesmo que qualquer parâmetro de função. A diferença é que o valor para que `s` aponta não é destruído (o espaço de memória que o contém não é liberado) quando acaba esse escopo.
+
+Note que, na solução acima, não é necessário retornar uma tupla e a função recebe `&String`. O símbolo `&` indica referência e é utilizado também na chamada da função para criar uma referência a partir de `s1`. O diagrama a seguir mostra como funcionam as referências na memória.
+
+<div align="center">
+<img src="./resources/images/Referencias.png">
+</div>
+
+A referência é um ponteiro para o ponteiro (na stack) para o dado na heap.
+
+A ação de enviar referências aos outros escopos ao invés de fazer um *move* da posse (ownership) do valor é chamada **Empréstimo de Posse** (*Ownership Borrowing*).
+
+### Multabilidade de Referências
+Assim como variáveis, referências são imutáveis por padrão. O código a seguir, por exemplo, não compila!
+
+```rust
+fn main() {
+    let s = String::from("olá");
+
+    let saida = concatena_mundo(&s);
+
+    println!("{}, mundo!", s);
+    println!("{}", saida);
+}
+
+fn concatena_mundo(s: &String) -> String {
+    s.push_str(", mundo!"); // Erro em tempo de compilação ❌
+    s
+}
+```
+
+A solução também é análoga a quando mexemos com não-referências: utiliza-se a *keyword* `mut`:
+
+```rust
+fn main() {
+    let s = String::from("olá");
+
+    let saida = concatena_mundo(&mut s); // Enviamos uma referência mutável
+
+    println!("{}, mundo!", s);  // > olá, mundo!
+    println!("{}", saida); // > olá, mundo!
+}
+// Recebemos uma referência mutável
+fn concatena_mundo(s: &mut String) -> String {
+    s.push_str(", mundo!");
+    s
+}
+```
+
+Referências mutáveis tem uma grande restrição: se há uma referência mutável para um valor, não pode haver outras referências a ele. Essa restrição é necessária para prevenir corrida de dados (*data race*) em tempo de compilação. 
+
+> **O que é corrida de dados?** Corrida de dados ocorre quando múltiplas threads ou processos acessam simultaneamente o mesmo recurso, pelo menos uma delas realiza modificações nesse recurso e não há mecanismo de sincronização de acesso ao dado. Sob essas condições, o comportamento é imprevisível pois não há controle sobre qual processo acessa o dado antes e o resultado do programa depende disso.
+
+Pode-se utilizar chaves para criar um novo escopo e, nele, criar outra referência. Essas referências, porém, não são simultâneas.
+
+```rust
+    let mut s = String::from("olá");
+
+    {
+        let r1 = &mut s;    
+    }
+
+    let r2 = &mut s;
+```
+
+Pela explicação de corrida de dados, fica claro que apenas uma referência mutável já é um problema (mesmo que as outras sejam imutáveis), dessa forma, o Rust também não permite múltiplas referências imutáveis se existir uma mutável. O código a seguir também gera erro.
+
+```rust
+    let mut s = String::from("olá");
+
+    let r1 = &s; // sem problema
+    let r2 = &s; // sem problema
+    let r3 = &mut s; // PROBLEMÃO
+
+    println!("{}, {}, e {}", r1, r2, r3);
+```
+
+O escopo de uma referência começa onde ela é declarada e continua até o seu último uso; o compilador consegue dizer quando uma referência não é mais usada antes do final do escopo. Dessa forma, o código a seguir compila.
+
+```rust
+    let mut s = String::from("olá");
+
+    let r1 = &s; // sem problema
+    let r2 = &s; // sem problema
+    println!("{r1} e {r2}");
+    // As variáveis r1 e r2 não serão mais usadas
+
+    let r3 = &mut s; // sem problema
+    println!("{r3}");
+```
+### Referências Pendentes (Dangling References)
+Uma referência pendente ocorre quando um ponteiro aponta para um espaço de memória que foi liberado. Em linguagens como C e C++, com ponteiros, é fácil criar uma referência pendente; o código a seguir mostra um exemplo em C.
+
+```c
+int main() {
+    int *ptr = (int*)malloc(sizeof(int)); // Alocamos memória na heap para armazenar um inteiro
+    *ptr = 100; // Guardamos o valor `100` nesse espaço
+    free(ptr); // Desalocamos a memória, mas o ponteiro segue apontando para aquele espaço
+    // ptr agora aponta para uma memória inválida
+}
+```
+
+O Rust impede *dangling references* em tempo de compilação! Se você tem uma referencia a algum dado, o comilador garante que aquele dado não vai sair do escopo antes que a referência a ele saia. Vejamos o que o compilador nos diz quando tentamos criar uma referência pendente.
+
+```rust
+fn main() {
+    let dangling_reference = dangle();
+}
+
+fn dangle() -> &String {
+    let s = String::from("olá");
+
+    &s // Aqui, retornamos uma referência à String s, mas sabemos que `drop` será chamado para essa String assim que acabar o escopo da função!
+    // Isso criaria uma dangling reference
+}
+```
+O erro retornado é:
+
+```text
+$ cargo run
+   Compiling ownership v0.1.0 (file:///projects/ownership)
+error[E0106]: missing lifetime specifier
+ --> src/main.rs:5:16
+  |
+5 | fn dangle() -> &String {
+  |                ^ expected named lifetime parameter
+  |
+  = help: this function's return type contains a borrowed value, but there is no value for it to be borrowed from
+help: consider using the `'static` lifetime, but this is uncommon unless you're returning a borrowed value from a `const` or a `static`
+  |
+5 | fn dangle() -> &'static String {
+  |                 +++++++
+help: instead, you are more likely to want to return an owned value
+  |
+5 - fn dangle() -> &String {
+5 + fn dangle() -> String {
+  |
+
+error[E0515]: cannot return reference to local variable `s`
+ --> src/main.rs:8:5
+  |
+8 |     &s
+  |     ^^ returns a reference to data owned by the current function
+
+Some errors have detailed explanations: E0106, E0515.
+For more information about an error, try `rustc --explain E0106`.
+error: could not compile `ownership` (bin "ownership") due to 2 previous errors
+```
+Esse erro trata de *lifetimes*, conceito ainda não discutido. Ignorando essa parte, perceba o trecho `this function's return type contains a borrowed value, but there is no value
+for it to be borrowed from`; ele explica perfeitamente o erro: Não podemos retornar uma referência que se refere a nada! (aponta para um espaço de memória vazio).
+
+As regras de referências que vimos até agora são:
+- **A qualquer momento no código, pode-se ter *n* referências imutáveis OU uma referência mutável**;
+- **Referências devem sempre ser válidas**.
+
+## Slices
