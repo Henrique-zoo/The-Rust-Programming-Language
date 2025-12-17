@@ -33,6 +33,7 @@ Esse repositório contém os códigos e anotações que criei enquanto estudava 
 8. [Referências e Empréstimo de Posse](#referências-e-emprésitmos-de-posse-ownership)
     1. [Multabilidade de Referências](#multabilidade-de-referências)
     2. [Referências Pendentes (*Dangling References*)](#referências-pendentes-dangling-references)
+9. [O Tipo Fatia (Slice Type)](#o-tipo-fatia-slice-type)
 ----
 
 ## **Variáveis e Constantes**
@@ -968,4 +969,90 @@ As regras de referências que vimos até agora são:
 - **A qualquer momento no código, pode-se ter *n* referências imutáveis OU uma referência mutável**;
 - **Referências devem sempre ser válidas**.
 
-## Slices
+## O Tipo "Fatia" (Slice Type)
+Já vimos como usar referências para manipular variáveis, mas será que podemos utilizá-las para manipular "fatias" (sequencias contíguas) de coleções? Por exemplo, na String `String::from("Hello, world!")` talvez queiramos manipular apenas `"world"`, mexendo diretamente no espaço de memória correspopndente a essa "fatia" da `String` original. Será que isso é possível? Sim! E esses são exatamente os `Slices` a que nos referimos!
+
+
+### Fatias de String (String Slices)
+Considere o seguinte exemplo: queremos definir uma função que recebe uma String, possivelmente com palavras separadas por espaço `" "`; queremos retornar a primeira palavra dessa String (caso haja apenas uma, retornamos ela). Sem Slices, podemos retornar o índice do primeiro espaço da String:
+
+```rust
+fn primeira_palavra(s: String) -> usize {
+    let bytes = s.as_bytes(); // Convertemos a String em um array de bytes
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' { return i } // Retornamos o índice do primeiro espaço
+    }
+
+    s.len() // Caso contrário, retornamos o próximo índice após o final da palavra
+}
+```
+
+Pronto! Temos uma forma de recuperar a primeira palavra de uma String. Mas e se a String for modificada? Após a chamada da função `primeira_palavra`, não há nada associando o resultado da sua execução à String `s`; o resultado só faz sentido no contexto da String original, havendo alterações, ele se torna inútil! Considere o código a seguir:
+
+```rust
+fn main() {
+    let mut s = String::from("Olá, mundo!");
+
+    let palavra = primeira_palavra(&s); // palavra = 5
+
+    s.clear(); // s = ""
+    // `word` ainda é igual a `5` aqui, mas `s` é uma String vazia!
+    // O valor `5` não tem mais nenhum significado, `word` é totalmente inválido
+}
+```
+
+Ficar se preocupando em manter a sincronização entre variáveis auxiliares e a String após cada alteração nela não é legal e é um para-raio de bug (confiar no programador? NUNCA!). Dessa forma, o Rust introduz uma solução idiomática e confiável, fatias de Strings (String Slices)!
+
+Uma String Slice é uma referência a uma porção de uma String
+```rust
+    let s = String::from("ola, mundo!");
+    let ola = &s[0..3]; // ou s[..3]
+    let mundo = &s[5..10];
+    let s2 = &s[..]; // Toda a String
+```
+Os Slices, como pode ser visto no código acima, são criados especificando-se o índice de início e o próximo índice após o final desse Slice, esse índices são separados por dois pontos (`..`, não `:`) dentro de colchetes `[]`. O diagrama a seguir representa o que são slices na memória.
+
+<div align="center">
+<img src="./resources/images/String Slices.png">
+</div>
+
+Vamos reescrever a função `primeira_palavra()` utilizando String Slices. O tipo de um String Slice é `&str`.
+
+```rust
+fn primeira_palavra(s: &String) -> &str {
+    let bytes = s.as_bytes();
+
+    for (i, &item) in bytes.iter().enumerate() {
+        if item == b' ' {
+            return &s[..i];
+        }
+    }
+
+    &s[..]
+}
+```
+
+Agora, o dado retornado pela função está conectado com a String. Essa interface impede bugs no tratamento dos dados pois gera erros de compilação em casos de má utilização (as referências devem ser sempre válidas!). Considere o exemplo em que o índice se tornava inútil devido ao uso do `.clear()` na abordagem anterior.
+
+```rust
+fn main() {
+    let mut s = String::from("olá mundo");
+
+    let palavra = primeira_palavra(&s);
+
+    s.clear(); // erro! ❌
+
+    println!("A primeira palavra é: {palavra}");
+}
+```
+Isso gera um erro de compilação! O String Slice `palavra` é uma referência imutável e o método `clear()` pega uma referência mutável de `s`. Como o `println()` usa a referência mutável, a linha `s.clear()` faz parte do escopo de `palavra`, ou seja, ao chamar o método `clear()` teríamos uma referência mutável e uma imutável, o que é proibido!
+
+#### Literais de String como Fatias
+Já falamos sobre literais de string e sobre como eles ficam armazenados nos binários do programa. Agora que entendemos Slices, podemos entender melhor como os literais funcionam.
+```rust
+let s = "Olá, mundo!"; // O tipo de `s` é &str 
+```
+O tipo de um literal de string é o mesmo de uma fatia de string. Isso ocorre porque um literal de string é um slice apontando para um ponto específico dos binários. É por isso também que os literais de string são imutáveis: eles são `&str`, referências imutáveis!
+
+### Fatias de String como Parâmetros
