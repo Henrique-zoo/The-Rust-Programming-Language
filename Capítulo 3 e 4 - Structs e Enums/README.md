@@ -203,43 +203,69 @@ Os enums, assim como as structs, permitem combinar outros tipos e construir um t
 
 Formalmente, enums são a forma como o rust implementa a outra classe de tipos algébricos, os tipos soma (também explicados no repositório [Linguagens de Programação](https://github.com/Henrique-zoo/Linguagens-de-Programacao)).
 
-Para definir uma enum, inserimos a palavra chave `enum`, o nome que daremos a ela e, em seguida, entre chaves, as suas variantes, que são bem similares a structs. Por exemplo, considere o caso de endereços de IP, que podem ser de dois padrões: versão 4 ou versão 6. Podemos modelar isso em código da seguinte maneira:
-
-```rust
-enum IpEnd {
-    V4,
-    V6,
-}
-```
-em que `V4` e `V6` são similares a *unit-like structs*. Nesse caso, apenas conseguiríamos distinguir o tipo do IP, mas não acessar seu valor. Para ter acesso ao valor, ao invés de *unit-like structs*, podemos utilizar (coisas similares a) *tuple structs*, por exemplo:
-
-```rust
-enum IpEnd {
-    V4(String),
-    V6(String),
-}
-```
-
-A sintaxe das variantes é, ainda, muito parecida com a de structs, por que eu me refiro a elas apenas como similares? Apesar da semelhança no código em alto nível, há uma grande diferença em nível de compilação. Lembre-se das *tuple structs*: ao declará-las, o que o compilador faz? Ele cria um construtor-função e um tipo. No caso das variantes de uma enum, contudo, o tipo não é criado. De fato o **único** tipo criado na definição de uma enum é o que ela define - as variantes não criam tipos nomeáveis, apenas injetores (construtores) que retornam o tipo da enum. Dessa forma, se lá tínhamos, para uma *tuple struct* `A(...)`, uma função `A: fn(...) -> A`, aqui temos, para uma `enum E { A(...) }`, uma função `E::A: fn(...) -> E`, pois sequer existe o tipo `A`. `E::A` representa que a função `A` só existe no *namespace* do tipo `E`.
-
-Mesmo se utilizarmos a sintaxe similar a de structs nomeadas na definição de uma variante da enum, nenhum tipo, além do da enum, é criado. Por exemplo, em
+Para definir uma enum, inserimos a palavra chave `enum`, o nome que daremos a ela e, em seguida, entre chaves, as suas variantes.
 
 ```rust
 enum Forma {
-    Retangulo {
-        largura: u32,
-        altura: u32,
+    Retangulo,
+    Triangulo,
+    Circulo,
+}
+```
+Note que `Retangulo`, `Triangulo` e `Circulo` parecem bastante *unit-like structs*. No exemplo acima, apenas conseguiríamos distinguir a forma com que estamos tratando, mas não calcular área ou perímetro dessas formas, pois não há nenhum valor associado a elas. Para ter acesso a esses valores, ao invés de *unit-like structs*, podemos definir as variantes de forma similar a como definimos *tuple structs*, por exemplo:
+
+```rust
+enum Forma {
+    Retangulo(u64, u64),
+    Triangulo(u64, u64),
+    Circulo(u64),
+}
+```
+
+Ou até de forma similar a como definimos structs nomeadas:
+
+```rust
+enum Forma {
+    Retangulo{
+        base: u64,
+        altura: u64,
     },
-    Triangulo {
-        base: u32,
-        altura: u32,
+    Triangulo{
+        base: u64,
+        altura: u64,
+    },
+    Circulo{
+        raio: u64,
     },
 }
 ```
 
-será criado apenas o tipo `Forma` e, diferentemente de structs nomeadas de verdade, serão criados os construtores
+A sintaxe das variantes é muito parecida com a de structs. Por que eu me refiro a elas apenas como similares? Apesar da semelhança no código em alto nível, há uma grande diferença em nível de compilação. Lembre-se das *tuple structs*: ao declará-las, o que o compilador faz? Ele cria um construtor-função e um tipo; com as structs nomeadas é similar: o compilador cria o tipo, mas não cria o contrutor-função. No caso das variantes de uma enum o tipo não é criado, apenas o construtor-função. De fato o **único** tipo criado na definição de uma enum é o que ela define - as variantes não criam tipos nomeáveis, apenas injetores (construtores) que retornam o tipo da enum. Dessa forma, se lá tínhamos, para uma *tuple struct* `A(...)`, uma função `A: fn(...) -> A`, aqui temos, para uma `enum E { A(...) }`, uma função `E::A: fn(...) -> E`, em que `E::A` representa que a função `A` só existe no *namespace* do tipo `E`.
+
+Para instanciar enums, chamamos o construtor da variante, claro, no namespace da enum.
 
 ```rust
-Forma::Retangulo: fn(u32, u32) -> Forma;
-Forma::Triangulo: fn(u32, u32) -> Forma;
+let quatro = IpEnd::V4(String::from("127.0.0.1"));
+let seis = IpEnd::V6(String::from("::1"));
 ```
+
+Dessa forma, se uma função tem como parâmetro algo do tipo da enum, podemos chamá-la com argumentos de todas as variantes dessa enum:
+
+```rust
+fn rota(endereco_ip: IpEnd) {}
+
+fn main() {
+    rota(IpEnd::V4(String::from("127.0.0.1")));
+    rota(IpEnd::V6(String::from("::1")));
+}
+```
+
+Essa é a grande vantagem de usar enums. De fato, se não fosse essa propriedade, não haveria vantagem de enums em relação a simplesmente definir structs para cada variante da enum e fazer alguma "gambiarra" para conseguir aplicar uma função a todos esses tipos.
+
+## A Enum `Option`
+
+Uma escolha de design da linguagem rust é, diferente de muitas linguagens, não ter um tipo `null`. Apesar do conceito que o `null` representa se, de fato, útil na programação, sua implementação é motivo de muitos problemas - algo que o próprio criador desse conceito admite. 
+
+`Option` é uma enum definida na *standard library*. Ela é exatamente igual ao `Maybe` do haskell.
+
+A enum `Option` serve para representar casos em que um valor pode ser algo ou nada. Por exemplo: se uma função retorna o primeiro elemento de uma lista, ela pode (i) retornar `None` se a lista for vazia ou (ii) retornar `Some(valor)`, em que `valor` é o primeiro elemento da lista.
